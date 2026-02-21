@@ -78,11 +78,13 @@ services:
         fi
 
         if [ -d /opt/devbox-defaults/agent ]; then
-          cp -a /opt/devbox-defaults/agent/. /home/coder/.config/agent/
+          cp -an /opt/devbox-defaults/agent/. /home/coder/.config/agent/
         fi
 
-        chmod a+rwx /workspace /home/coder/.config/code-server /home/coder/.config/agent /home/coder/.local || true
         chown -R "${coder_uid}:${coder_gid}" /workspace /home/coder/.config /home/coder/.local
+        chmod 0775 /workspace
+        chmod 0700 /home/coder/.config /home/coder/.config/agent /home/coder/.local
+        chmod 0700 /home/coder/.config/code-server
     volumes:
       - workspace-data:/workspace
       - code-server-config:/home/coder/.config/code-server
