@@ -1,0 +1,13 @@
+{
+  "providers": {
+    "llm-server": {
+      "name": "llm-server",
+      "baseURL": "http://llm-server:8081/v1",
+      "apiKey": "dummy",
+      "models": [
+        "Qwen-Coder-Next.gguf"
+      ]
+    }
+  },
+  "model": "llm-server/Qwen-Coder-Next.gguf"
+}

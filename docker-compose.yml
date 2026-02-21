@@ -22,6 +22,9 @@ services:
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://llm-server:8081/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-dummy}
+      OPENAI_MODEL: ${OPENAI_MODEL:-Qwen-Coder-Next.gguf}
+      AIDER_MODEL: ${AIDER_MODEL:-openai/Qwen-Coder-Next.gguf}
+      QWEN_CODE_MODEL: ${QWEN_CODE_MODEL:-Qwen-Coder-Next.gguf}
       AGENT_CMD: ${AGENT_CMD:-bash}
       TZ: ${TZ:-America/New_York}
       STACK_SSH_TARGET: ${STACK_SSH_TARGET:-}
@@ -43,6 +46,8 @@ services:
       - appnet
 
   devbox-init:
+    build:
+      context: .
     image: vibe-devbox:local
     container_name: devbox-init
     user: root
@@ -59,7 +64,25 @@ services:
       - -lc
       - |
         set -euo pipefail
+        coder_uid="$(id -u coder)"
+        coder_gid="$(id -g coder)"
+
+        mkdir -p \
+          /workspace \
+          /home/coder/.config/code-server \
+          /home/coder/.config/agent \
+          /home/coder/.local
+
+        if [ ! -f /home/coder/.config/code-server/config.yaml ] && [ -f /opt/devbox-defaults/code-server/config.yaml ]; then
+          cp /opt/devbox-defaults/code-server/config.yaml /home/coder/.config/code-server/config.yaml
+        fi
+
+        if [ -d /opt/devbox-defaults/agent ]; then
+          cp -a /opt/devbox-defaults/agent/. /home/coder/.config/agent/
+        fi
+
         chmod a+rwx /workspace /home/coder/.config/code-server /home/coder/.config/agent /home/coder/.local || true
+        chown -R "${coder_uid}:${coder_gid}" /workspace /home/coder/.config /home/coder/.local
     volumes:
       - workspace-data:/workspace
       - code-server-config:/home/coder/.config/code-server

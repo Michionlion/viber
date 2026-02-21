@@ -29,6 +29,15 @@ Avoid changing persistence model unless requested:
 - `/workspace` and config dirs are Docker named volumes to avoid bind-mount permission issues.
 - Saving is expected to happen primarily via git pushes.
 
+## Agent CLI Defaults
+- Installed CLIs: `codex`, `aider`, `qwen`.
+- Source-controlled defaults live under `config/agent/` and are seeded into `/home/coder/.config/agent` on first run.
+- Runtime symlinks map those files into expected paths:
+  - `/home/coder/.codex/config.toml`
+  - `/home/coder/.aider.conf.yml`
+  - `/home/coder/.qwen/settings.json`
+- Keep OpenAI-compatible clients (`codex`, `aider`, `qwen`) pointed at `http://llm-server:8081/v1`.
+
 ## How To Edit Stack Config From Inside devbox
 The stack repo is bind-mounted into `devbox` at:
 - `/stack`
@@ -69,8 +78,7 @@ If you update pinned base images:
 - Prefer pinning by digest for `llm-server` to avoid surprise changes.
 
 ## Operational Notes
-- `devbox-init` exists to chmod the named volumes so the non-root `coder` user can write. Do not remove it unless you replace it with an equivalent strategy.
+- `devbox-init` exists to seed config defaults and chmod/chown the named volumes so the non-root `coder` user can write. Do not remove it unless you replace it with an equivalent strategy.
 - If `docker compose` on the host is too old to support `depends_on.condition`, you may need to run once on the host:
   - `docker compose run --rm devbox-init`
   - then `docker compose up -d --build`
-

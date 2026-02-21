@@ -3,6 +3,7 @@ coder-local/
 caddy-data/
 caddy-config/
 .env
+!config/agent/qwen/.env
 
 # Models (keep placeholders tracked)
 models/*

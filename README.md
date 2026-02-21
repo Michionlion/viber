@@ -3,10 +3,10 @@
 ## What this stack does
 This project provides a private, Docker-based development setup for personal "vibe coding":
 - `code-server` in browser on port `8080`
-- `ttyd` terminal in browser on port `7681` for agent CLIs (`codex`, Claude Code, aider, or plain bash)
+- `ttyd` terminal in browser on port `7681` for agent CLIs (`codex`, `aider`, `qwen`/`qwen-code`, or plain bash)
 - local `llama.cpp` OpenAI-compatible API (`/v1`) on an internal Docker network only
 - app preview pass-through on ports `3000-3010` for phone testing
-- preinstalled agent CLIs inside `devbox`: `codex`, `claude`, `aider`
+- preinstalled agent CLIs inside `devbox`: `codex`, `aider`, `qwen`
 
 By default, published ports bind to `127.0.0.1` on the host. For phone access over Tailscale, set `BIND_IP` to your host's Tailscale IP (usually `100.x`).
 
@@ -25,6 +25,9 @@ By default, published ports bind to `127.0.0.1` on the host. For phone access ov
 ├── coder-local/
 └── config/
     ├── agent/
+    │   ├── aider/
+    │   ├── codex/
+    │   └── qwen/
     └── code-server/
         └── config.yaml
 ```
@@ -60,6 +63,17 @@ Note: `docker-compose.yml` uses Docker named volumes by default for `/workspace`
    ```bash
    docker compose ps
    ```
+
+## Agent config defaults
+Default config files are seeded into `/home/coder/.config/agent` and linked into each tool's expected home path:
+- Codex: `/home/coder/.codex/config.toml`
+- aider: `/home/coder/.aider.conf.yml`
+- qwen-code: `/home/coder/.qwen/settings.json`
+
+All defaults target the internal llama.cpp endpoint:
+- Base URL: `http://llm-server:8081/v1`
+- API key: `dummy`
+- Model: `Qwen-Coder-Next.gguf`
 
 ## Access from phone (while connected to Tailscale)
 These URLs work when `BIND_IP` is set to your host's Tailscale IP (or you otherwise publish the ports to a Tailscale-reachable interface).
@@ -105,7 +119,7 @@ Your app must listen on `0.0.0.0` in the container, not `127.0.0.1`.
   flask run --host=0.0.0.0 --port=3000
   ```
 
-## Switch agent command (bash -> codex)
+## Switch agent command (bash -> codex/qwen/aider)
 Set `AGENT_CMD` in `.env` and restart:
 
 ```bash
@@ -113,7 +127,10 @@ echo "AGENT_CMD=codex" >> .env
 docker compose up -d
 ```
 
-You can set other commands too, for example `AGENT_CMD="aider --model openai/gpt-4.1"`.
+Other examples:
+- `AGENT_CMD=qwen`
+- `AGENT_CMD=qwen-code`
+- `AGENT_CMD="aider --model openai/Qwen-Coder-Next.gguf"`
 
 ## Security model
 - Tailscale on the host is the primary access control layer.
