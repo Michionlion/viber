@@ -1,8 +1,42 @@
-# Codex CLI default config for local llama.cpp (OpenAI-compatible) server.
-model_provider = "llm_server"
-model = "Qwen-Coder-Next.gguf"
+# yaml-language-server: $schema=https://developers.openai.com/codex/config-schema.json
+
+# Default to local llama.cpp (OpenAI-compatible) server.
+profile = "local"
+
+# Reduce outbound/telemetry as much as possible.
+[feedback]
+enabled = false
+
+[history]
+persistence = "none"
+
+[otel]
+exporter = "none"
+trace_exporter = "none"
+log_user_prompt = false
+
+web_search = "disabled"
 
 [model_providers.llm_server]
+name = "Local llama.cpp"
 base_url = "http://llm-server:8081/v1"
 env_key = "OPENAI_API_KEY"
 wire_api = "chat"
+
+# Remote provider, only used when explicitly selecting the "openai" profile.
+# Uses a separate env var so other tools (aider/qwen) can stay local-only:
+#   export CODEX_OPENAI_API_KEY=...
+[model_providers.openai_api]
+name = "OpenAI (API key)"
+base_url = "https://api.openai.com/v1"
+env_key = "CODEX_OPENAI_API_KEY"
+wire_api = "responses"
+requires_openai_auth = false
+
+[profiles.local]
+model_provider = "llm_server"
+model = "Qwen-Coder-Next.gguf"
+
+[profiles.openai]
+model_provider = "openai_api"
+model = "gpt-5-codex"

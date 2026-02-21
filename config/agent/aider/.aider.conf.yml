@@ -1,3 +1,5 @@
 openai-api-base: http://llm-server:8081/v1
 openai-api-key: dummy
 model: openai/Qwen-Coder-Next.gguf
+analytics-disable: true
+check-update: false

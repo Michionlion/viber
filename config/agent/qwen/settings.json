@@ -1,13 +1,32 @@
 {
-  "providers": {
-    "llm-server": {
-      "name": "llm-server",
-      "baseURL": "http://llm-server:8081/v1",
-      "apiKey": "dummy",
-      "models": [
-        "Qwen-Coder-Next.gguf"
-      ]
+  "general": {
+    "enableAutoUpdate": false
+  },
+  "privacy": {
+    "usageStatisticsEnabled": false
+  },
+  "telemetry": {
+    "enabled": false,
+    "logPrompts": false
+  },
+  "security": {
+    "auth": {
+      "selectedType": "openai",
+      "baseUrl": "http://llm-server:8081/v1",
+      "apiKey": "dummy"
     }
   },
-  "model": "llm-server/Qwen-Coder-Next.gguf"
+  "model": {
+    "name": "Qwen-Coder-Next.gguf",
+    "enableOpenAILogging": false
+  },
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "Qwen-Coder-Next.gguf",
+        "baseUrl": "http://llm-server:8081/v1",
+        "envKey": "OPENAI_API_KEY"
+      }
+    ]
+  }
 }

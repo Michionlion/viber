@@ -132,6 +132,16 @@ Other examples:
 - `AGENT_CMD=qwen-code`
 - `AGENT_CMD="aider --model openai/Qwen-Coder-Next.gguf"`
 
+## Codex: local vs external models
+Codex is configured with two profiles in `/home/coder/.codex/config.toml`:
+- `local` (default): talks to `http://llm-server:8081/v1`
+- `openai`: talks to OpenAI with `CODEX_OPENAI_API_KEY`
+
+Examples:
+- Local (default): `codex`
+- Force local: `codex --profile local`
+- External: `CODEX_OPENAI_API_KEY=... codex --profile openai`
+
 ## Security model
 - Tailscale on the host is the primary access control layer.
 - No public internet exposure is configured in this stack.
