@@ -1,0 +1,36 @@
+# Local runtime data
+coder-local/
+caddy-data/
+caddy-config/
+.env
+
+# Models (keep placeholders tracked)
+models/*
+!models/.gitkeep
+!models/README.md
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS junk
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+pip-wheel-metadata/
+
+# Node
+node_modules/
+.npm/
+.pnpm-store/

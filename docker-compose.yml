@@ -1,0 +1,114 @@
+services:
+  devbox:
+    build:
+      context: .
+    image: vibe-devbox:local
+    container_name: devbox
+    working_dir: /workspace
+    read_only: false
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 512
+    tmpfs:
+      - /tmp
+      - /run
+      - /var/tmp
+    ports:
+      - "${BIND_IP:-127.0.0.1}:8080:8080"
+      - "${BIND_IP:-127.0.0.1}:7681:7681"
+      - "${BIND_IP:-127.0.0.1}:3000-3010:3000-3010"
+    environment:
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://llm-server:8081/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-dummy}
+      AGENT_CMD: ${AGENT_CMD:-bash}
+      TZ: ${TZ:-America/New_York}
+      STACK_SSH_TARGET: ${STACK_SSH_TARGET:-}
+      STACK_HOST_DIR: ${STACK_HOST_DIR:-}
+      STACK_SSH_IDENTITY_FILE: ${STACK_SSH_IDENTITY_FILE:-}
+      STACK_RELAUNCH_CMD: ${STACK_RELAUNCH_CMD:-docker compose up -d --build}
+    volumes:
+      - workspace-data:/workspace
+      - code-server-config:/home/coder/.config/code-server
+      - agent-config:/home/coder/.config/agent
+      - coder-local:/home/coder/.local
+      - ./:/stack:rw
+    depends_on:
+      devbox-init:
+        condition: service_completed_successfully
+      llm-server:
+        condition: service_started
+    networks:
+      - appnet
+
+  devbox-init:
+    image: vibe-devbox:local
+    container_name: devbox-init
+    user: root
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 64
+    tmpfs:
+      - /tmp
+      - /run
+    entrypoint:
+      - /bin/bash
+      - -lc
+      - |
+        set -euo pipefail
+        chmod a+rwx /workspace /home/coder/.config/code-server /home/coder/.config/agent /home/coder/.local || true
+    volumes:
+      - workspace-data:/workspace
+      - code-server-config:/home/coder/.config/code-server
+      - agent-config:/home/coder/.config/agent
+      - coder-local:/home/coder/.local
+
+  llm-server:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:fdaaebffc2833a3dd6b6fecc3e18fd59cc37cf0eb6d44fe60741f34ca5b46c03
+    container_name: llm-server
+    gpus: all
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    tmpfs:
+      - /tmp
+      - /run
+    expose:
+      - "8081"
+    environment:
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/.cache
+    volumes:
+      - ./models:/models:ro
+    command:
+      - -m
+      - /models/${MODEL_FILE:-Qwen-Coder-Next.gguf}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8081"
+      - --ctx-size
+      - "${LLAMA_CTX_SIZE:-32768}"
+      - --parallel
+      - "${LLAMA_PARALLEL:-1}"
+      - --jinja
+      - --n-gpu-layers
+      - "${LLAMA_N_GPU_LAYERS:-999}"
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  workspace-data:
+  code-server-config:
+  agent-config:
+  coder-local:
