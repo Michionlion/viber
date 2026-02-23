@@ -36,6 +36,7 @@ COPY config/code-server/config.yaml /opt/devbox-defaults/code-server/config.yaml
 COPY config/code-server/User/settings.json /home/coder/.local/share/code-server/User/settings.json
 COPY config/code-server/User/settings.json /opt/devbox-defaults/code-server/User/settings.json
 COPY config/agent /opt/devbox-defaults/agent
+COPY scripts/devbox-init-entrypoint.sh /usr/local/bin/devbox-init-entrypoint.sh
 
 RUN chmod 0755 /usr/local/bin/agent-shell \
     && chmod 0755 /usr/local/bin/stack-relaunch \
@@ -52,7 +53,8 @@ RUN chmod 0755 /usr/local/bin/agent-shell \
     && ln -sf /home/coder/.config/agent/qwen/settings.json /home/coder/.qwen/settings.json \
     && ln -sf /home/coder/.config/agent/qwen/.env /home/coder/.qwen/.env \
     && ln -sf /home/coder/.config/agent/aider/.aider.conf.yml /home/coder/.aider.conf.yml \
-    && chown -R coder:coder /workspace /home/coder/.config /home/coder/.local /home/coder/.codex /home/coder/.qwen /usr/local/bin/agent-shell /usr/local/bin/stack-relaunch
+    && chmod 0755 /usr/local/bin/devbox-init-entrypoint.sh \
+    && chown -R coder:coder /workspace /home/coder/.config /home/coder/.local /home/coder/.codex /home/coder/.qwen /usr/local/bin/agent-shell
 
 USER coder
 WORKDIR /workspace

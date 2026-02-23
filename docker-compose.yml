@@ -22,9 +22,9 @@ services:
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://llm-server:8081/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-dummy}
-      OPENAI_MODEL: ${OPENAI_MODEL:-Qwen-Coder-Next.gguf}
-      AIDER_MODEL: ${AIDER_MODEL:-openai/Qwen-Coder-Next.gguf}
-      QWEN_CODE_MODEL: ${QWEN_CODE_MODEL:-Qwen-Coder-Next.gguf}
+      OPENAI_MODEL: ${OPENAI_MODEL:-Qwen3-Coder-Next.gguf}
+      AIDER_MODEL: ${AIDER_MODEL:-openai/Qwen3-Coder-Next.gguf}
+      QWEN_CODE_MODEL: ${QWEN_CODE_MODEL:-Qwen3-Coder-Next.gguf}
       AGENT_CMD: ${AGENT_CMD:-bash}
       TZ: ${TZ:-America/New_York}
       STACK_SSH_TARGET: ${STACK_SSH_TARGET:-}
@@ -33,10 +33,10 @@ services:
       STACK_RELAUNCH_CMD: ${STACK_RELAUNCH_CMD:-docker compose up -d --build}
     volumes:
       - workspace-data:/workspace
+      - coder-home:/home/coder
       - code-server-config:/home/coder/.config/code-server
       - agent-config:/home/coder/.config/agent
       - coder-local:/home/coder/.local
-      - ./:/stack:rw
     depends_on:
       devbox-init:
         condition: service_completed_successfully
@@ -46,8 +46,6 @@ services:
       - appnet
 
   devbox-init:
-    build:
-      context: .
     image: vibe-devbox:local
     container_name: devbox-init
     user: root
@@ -55,44 +53,24 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - DAC_OVERRIDE
+      - CHOWN
+      - FOWNER
     pids_limit: 64
     tmpfs:
       - /tmp
       - /run
-    entrypoint:
-      - /bin/bash
-      - -lc
-      - |
-        set -euo pipefail
-        coder_uid="$(id -u coder)"
-        coder_gid="$(id -g coder)"
-
-        mkdir -p \
-          /workspace \
-          /home/coder/.config/code-server \
-          /home/coder/.config/agent \
-          /home/coder/.local
-
-        if [ ! -f /home/coder/.config/code-server/config.yaml ] && [ -f /opt/devbox-defaults/code-server/config.yaml ]; then
-          cp /opt/devbox-defaults/code-server/config.yaml /home/coder/.config/code-server/config.yaml
-        fi
-
-        if [ -d /opt/devbox-defaults/agent ]; then
-          cp -an /opt/devbox-defaults/agent/. /home/coder/.config/agent/
-        fi
-
-        chown -R "${coder_uid}:${coder_gid}" /workspace /home/coder/.config /home/coder/.local
-        chmod 0775 /workspace
-        chmod 0700 /home/coder/.config /home/coder/.config/agent /home/coder/.local
-        chmod 0700 /home/coder/.config/code-server
+    entrypoint: ["/usr/local/bin/devbox-init-entrypoint.sh"]
     volumes:
       - workspace-data:/workspace
+      - coder-home:/home/coder
       - code-server-config:/home/coder/.config/code-server
       - agent-config:/home/coder/.config/agent
       - coder-local:/home/coder/.local
 
   llm-server:
-    image: ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:fdaaebffc2833a3dd6b6fecc3e18fd59cc37cf0eb6d44fe60741f34ca5b46c03
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
     container_name: llm-server
     gpus: all
     read_only: true
@@ -100,6 +78,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - IPC_LOCK
+    ulimits:
+      memlock: -1
+    shm_size: "8g"
     pids_limit: 256
     tmpfs:
       - /tmp
@@ -112,19 +95,19 @@ services:
     volumes:
       - ./models:/models:ro
     command:
-      - -m
-      - /models/${MODEL_FILE:-Qwen-Coder-Next.gguf}
       - --host
       - 0.0.0.0
       - --port
       - "8081"
-      - --ctx-size
-      - "${LLAMA_CTX_SIZE:-32768}"
-      - --parallel
-      - "${LLAMA_PARALLEL:-1}"
-      - --jinja
-      - --n-gpu-layers
-      - "${LLAMA_N_GPU_LAYERS:-999}"
+      - -m
+      - /models/Qwen3-Coder-Next.gguf
+      - --models-preset
+      - /models/models.ini
+      - --models-max
+      - "1"
+      - --mlock
+      - --prio
+      - "2"
     networks:
       - appnet
 
@@ -134,6 +117,7 @@ networks:
 
 volumes:
   workspace-data:
+  coder-home:
   code-server-config:
   agent-config:
   coder-local:
